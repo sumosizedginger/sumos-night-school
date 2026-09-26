@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #12110e;
+  --color-panel: #1c1914;
+  --color-paper: #e7dcc8;
+  --color-gold: #b08948;
+  --color-gold-2: #d7bc8a;
+  --color-rose: #8d4a52;
+  --color-moon: #8ea4b8;
+  --color-muted: #a89880;
+  --color-line: #3a342a;
+  --font-serif: "Fraunces", "Iowan Old Style", Palatino, serif;
+  --font-sans: "Outfit", "Avenir Next", "Segoe UI", sans-serif;
+  --radius-card: 1.25rem;
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    background: var(--color-ink);
+    color: var(--color-paper);
+    font-family: var(--font-sans);
+    line-height: 1.55;
+  }
+  h1, h2, h3 {
+    font-family: var(--font-serif);
+    text-wrap: balance;
+  }
+  p { text-wrap: pretty; }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-moon);
+    outline-offset: 3px;
+  }
+}
+
+.tarot-face {
+  aspect-ratio: 2 / 3;
+}
+
+@keyframes card-in {
+  from { transform: rotateY(88deg); opacity: 0.35; }
+  to { transform: none; opacity: 1; }
+}
+
+.reveal-card {
+  animation: card-in 420ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal-card { animation: none; }
+}

@@ -1,0 +1,45 @@
+import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
+import { Shell } from "@/components/shell";
+import { LESSONS } from "@/content/lessons";
+import { useVault } from "@/lib/use-vault";
+
+export const Route = createFileRoute("/study")({ component: Study });
+
+function Study() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const nested = pathname.replace(/\/$/, "").startsWith("/study/");
+  if (nested) return <Outlet />;
+
+  return <StudyList />;
+}
+
+function StudyList() {
+  const { vault } = useVault();
+  const done = new Set(vault?.progress.lessonsCompleted ?? []);
+
+  return (
+    <Shell>
+      <h1 className="font-serif text-4xl">Study</h1>
+      <p className="mt-3 max-w-xl text-muted">
+        Nine lessons, in order. This is the class. A reading will not reteach it. On a finished draw, Teach this draw is the class for those cards only.
+      </p>
+      <ol className="mt-8 divide-y divide-line border-y border-line">
+        {LESSONS.map((lesson, index) => (
+          <li key={lesson.id}>
+            <Link
+              to="/study/$lessonId"
+              params={{ lessonId: lesson.id }}
+              className="flex min-h-16 items-center justify-between gap-4 py-3"
+            >
+              <span>
+                <span className="mr-3 text-sm text-gold">{index + 1}</span>
+                <span className="font-serif text-xl">{lesson.title}</span>
+              </span>
+              <span className="text-sm text-muted">{done.has(lesson.id) ? "Done" : "Open"}</span>
+            </Link>
+          </li>
+        ))}
+      </ol>
+    </Shell>
+  );
+}
