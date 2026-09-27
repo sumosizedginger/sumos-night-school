@@ -21,26 +21,16 @@ function StudyList() {
   return (
     <Shell>
       <h1 className="font-serif text-4xl">Study</h1>
-      <p className="mt-3 max-w-xl text-muted">
-        Nine lessons, in order. This is the class. A reading will not reteach it. On a finished draw, Teach this draw is the class for those cards only.
-      </p>
       <Constellation
         cardsOpened={vault?.progress.cardsOpened ?? []}
         lessonsCompleted={vault?.progress.lessonsCompleted ?? []}
       />
-      <ol className="mt-8 divide-y divide-line border-y border-line">
+      <ol className="toc">
         {LESSONS.map((lesson, index) => (
           <li key={lesson.id}>
-            <Link
-              to="/study/$lessonId"
-              params={{ lessonId: lesson.id }}
-              className="flex min-h-16 items-center justify-between gap-4 py-3"
-            >
-              <span>
-                <span className="mr-3 text-sm text-gold">{index + 1}</span>
-                <span className="font-serif text-xl">{lesson.title}</span>
-              </span>
-              <span className="text-sm text-muted">{done.has(lesson.id) ? "Done" : "Open"}</span>
+            <Link to="/study/$lessonId" params={{ lessonId: lesson.id }}>
+              <span className={done.has(lesson.id) ? "toc-num is-done" : "toc-num"}>{String(index + 1).padStart(2, "0")}</span>
+              <span className="font-serif text-2xl">{lesson.title}</span>
             </Link>
           </li>
         ))}

@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { Altar } from "@/components/altar";
 import { CardFan } from "@/components/fan";
-import { btn, btnQuiet, Shell } from "@/components/shell";
+import { btnQuiet, btnSeal, Shell } from "@/components/shell";
 import { VoiceCopy, VoiceSwitch, type ReadingView } from "@/components/voice";
 import { CARDS, CARD_BY_ID, CORPUS_VERSION, getCard } from "@/content/cards";
 import { getSpread, SPREADS, type SpreadId } from "@/content/spreads";
@@ -217,33 +217,33 @@ function Read() {
               value={question}
               maxLength={500}
               onChange={(event) => setQuestion(event.target.value.slice(0, 500))}
-              className="mt-2 min-h-28 w-full border border-line bg-panel p-3 text-paper"
+              className="ask-field"
+              placeholder="Write it as you would say it."
             />
-            <span className="mt-1 block text-xs text-muted">{question.trim().length}/500</span>
           </label>
-          <fieldset>
+          <fieldset className="spread-names">
             <legend className="text-sm text-muted">Spread</legend>
-            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <div className="mt-3">
               {SPREADS.map((item) => (
                 <button
                   key={item.id}
                   type="button"
                   onClick={() => setSpreadId(item.id)}
-                  className={`min-h-11 border p-4 text-left ${spreadId === item.id ? "border-gold" : "border-line"}`}
+                  className={`spread-name ${spreadId === item.id ? "is-on" : ""}`}
                 >
-                  <span className="block font-serif text-xl">{item.name}</span>
-                  <span className="mt-1 block text-sm text-muted">{item.blurb}</span>
+                  <span className="font-serif text-xl">{item.name}</span>
+                  <span className="spread-blurb">{item.blurb}</span>
                 </button>
               ))}
             </div>
           </fieldset>
           <fieldset>
             <legend className="text-sm text-muted">How to draw</legend>
-            <div className="mt-3 flex flex-wrap gap-3">
-              <button type="button" className={method === "deal" ? btn : btnQuiet} onClick={() => setMethod("deal")}>
+            <div className="mt-3 flex flex-wrap gap-6">
+              <button type="button" className={method === "deal" ? "draw-choice is-on" : "draw-choice"} onClick={() => setMethod("deal")}>
                 The deck deals
               </button>
-              <button type="button" className={method === "fan" ? btn : btnQuiet} onClick={() => setMethod("fan")}>
+              <button type="button" className={method === "fan" ? "draw-choice is-on" : "draw-choice"} onClick={() => setMethod("fan")}>
                 Pick face down
               </button>
             </div>
@@ -252,7 +252,7 @@ function Read() {
             type="button"
             role="switch"
             aria-checked={reversals}
-            className={btnQuiet}
+            className="draw-choice"
             onClick={() => {
               const next = !reversals;
               setReversals(next);
@@ -262,7 +262,7 @@ function Read() {
             Reversals {reversals ? "on" : "off"}
           </button>
           <div>
-            <button type="submit" className={btn}>Continue</button>
+            <button type="submit" className={btnSeal}>Continue</button>
           </div>
         </form>
       ) : null}
@@ -280,7 +280,7 @@ function Read() {
             />
           </div>
           <div className="mt-8 flex flex-wrap gap-3">
-            <button type="button" className={btn} onClick={() => commitDraw(pendingIds)}>Reveal {spread.positions.length}</button>
+            <button type="button" className={btnSeal} onClick={() => commitDraw(pendingIds)}>Reveal {spread.positions.length}</button>
             <button type="button" className={btnQuiet} onClick={begin}>Shuffle again</button>
             <button type="button" className={btnQuiet} onClick={reset}>Leave without drawing</button>
           </div>
@@ -301,7 +301,7 @@ function Read() {
             }}
           />
           <div className="mt-6 flex flex-wrap gap-3">
-            <button type="button" className={btn} disabled={picked.length !== spread.positions.length} onClick={() => commitDraw(picked)}>
+            <button type="button" className={btnSeal} disabled={picked.length !== spread.positions.length} onClick={() => commitDraw(picked)}>
               Confirm {picked.length} of {spread.positions.length}
             </button>
             <button type="button" className={btnQuiet} onClick={begin}>Shuffle again</button>
@@ -326,7 +326,7 @@ function Read() {
             {shown + 1 < drawn.length ? (
               <button
                 type="button"
-                className={btn}
+                className={btnSeal}
                 onClick={() => {
                   const next = drawn[shown + 1];
                   cue(vault?.settings.sound, next?.card.arcana === "major" ? "major" : "seat");
@@ -336,7 +336,7 @@ function Read() {
                 Next card
               </button>
             ) : (
-              <button type="button" className={btn} onClick={() => finish()}>Show the reading</button>
+              <button type="button" className={btnSeal} onClick={() => finish()}>Show the reading</button>
             )}
             <button type="button" className={btnQuiet} onClick={() => finish()}>Skip to the reading</button>
           </div>
@@ -372,7 +372,7 @@ function Read() {
               <div className="mt-6 flex flex-wrap gap-3">
                 <button
                   type="button"
-                  className={btn}
+                  className={btnQuiet}
                   disabled={Boolean(reading.deeper) || pending}
                   onClick={() => void goDeeper(reading)}
                 >

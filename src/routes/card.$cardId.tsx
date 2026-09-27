@@ -37,23 +37,23 @@ function CardPage() {
 
   return (
     <Shell>
-      <Link to="/library" className="text-sm text-moon">Library</Link>
-      <div className="mt-6 grid items-start gap-10 lg:grid-cols-[18rem_1fr]">
-        <div>
+      <Link to="/library" className="back-leaf">Library</Link>
+      <article className="bifolio">
+        <div className="bifolio-plate">
           {card.picture === "done" ? (
             <ArtLoupe src={`/cards/${card.id}.jpg`} alt={`${card.name}, upright`} />
           ) : (
-            <CardFace card={card} />
+            <CardFace card={card} caption={false} />
           )}
-          <p className="mt-3 text-center font-serif text-lg">{card.name}</p>
-          <p className="text-center text-sm text-muted">Upright in the cabinet. Reversed turns the same picture.</p>
+          <p className="seat-label">{card.name}</p>
+          <p className="seat-orient">Upright on the plate. Reversed turns the same picture.</p>
         </div>
-        <article className="folio max-w-3xl p-6 sm:p-8">
-          <p className="text-sm tracking-[0.18em] text-muted">{card.arcana === "major" ? "Major Arcana" : card.suit}</p>
-          <h1 className="mt-2 font-serif text-4xl text-gold-2">{card.name}</h1>
-          <p className="mt-3 text-muted">{card.keywords.join(" · ")}</p>
-          <p className="drop-cap mt-6">{card.teachingLine}</p>
-          <div className="mt-8 grid gap-8 md:grid-cols-2">
+        <div className="bifolio-leaf">
+          <p className="leaf-kicker">{card.arcana === "major" ? "Major Arcana" : card.suit}</p>
+          <h1 className="font-serif text-4xl">{card.name}</h1>
+          <p className="leaf-keys">{card.keywords.join(" · ")}</p>
+          <p className="drop-cap">{card.teachingLine}</p>
+          <div className="leaf-columns">
             <section>
               <h2 className="font-serif text-2xl">Upright</h2>
               <span className="gilt-rule mt-3 w-24" />
@@ -70,7 +70,7 @@ function CardPage() {
           </div>
           <h2 className="mt-8 font-serif text-2xl">In the picture</h2>
           {card.picture === "done" && card.imageCues.length ? (
-            <ul className="mt-3 space-y-2">
+            <ul className="margin-notes">
               {card.imageCues.map((cue) => (
                 <li key={cue}>{cue}</li>
               ))}
@@ -78,8 +78,8 @@ function CardPage() {
           ) : (
             <p className="mt-3 text-muted">Picture unfinished. Nothing is described until the picture exists.</p>
           )}
-        </article>
-      </div>
+        </div>
+      </article>
     </Shell>
   );
 }

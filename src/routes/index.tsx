@@ -14,46 +14,35 @@ function Home() {
 
   return (
     <Shell>
-      <p className="text-sm tracking-wide text-gold">A beginner tarot studio</p>
-      <h1 className="mt-3 max-w-xl font-serif text-5xl text-paper">Night School</h1>
-      <p className="mt-4 max-w-xl text-lg text-paper">
-        Learn the deck as a language, then use it. One set of cards. A clear teacher. No fortune.
-      </p>
-      <div className="mt-8 grid gap-4 sm:grid-cols-2">
-        <Link to="/study" className="panel-gilt rounded-card p-6">
-          <p className="font-serif text-2xl text-gold-2">Study</p>
-          <p className="mt-2 text-muted">Nine lessons, then the whole library.</p>
-        </Link>
-        <Link to="/read" className="panel-gilt rounded-card p-6">
-          <p className="font-serif text-2xl text-gold-2">Reading</p>
-          <p className="mt-2 text-muted">Ask something. Draw. See how the reading was built.</p>
-        </Link>
-      </div>
-      <div className="mt-10 grid items-center gap-8 lg:grid-cols-[14rem_1fr]">
-        <Link to="/card/$cardId" params={{ cardId: "major-00" }} className="max-w-56">
-          <CardFace card={getCard("major-00")} compact />
-        </Link>
-        <p className="max-w-md text-muted">
-          The same woman walks every card. Study her pictures, then ask a question and see how a reading is built.
-        </p>
-      </div>
-      {ready && vault?.saveError ? <p className="mt-6 text-sm text-rose">{vault.saveError}</p> : null}
-      {ready && (next || latest) ? (
-        <div className="mt-8 flex flex-col gap-3 text-sm">
-          {next ? (
-            <Link to="/study/$lessonId" params={{ lessonId: next.id }} className="text-moon">
-              Continue study: {next.title}
+      <div className="entrance">
+        <div className="table-plane entrance-table">
+          <Link to="/card/$cardId" params={{ cardId: "major-00" }} className="entrance-card">
+            <CardFace card={getCard("major-00")} />
+          </Link>
+        </div>
+        <div className="entrance-copy">
+          <p className="colophon">Night School</p>
+          <h1 className="font-serif text-5xl text-paper">The deck is on the table.</h1>
+          <p className="mt-4 max-w-md text-lg">
+            Learn it as a language, then use it. One woman, seventy-eight pictures. No fortune.
+          </p>
+          <p className="entrance-ways">
+            <Link to="/study">Study</Link>
+            <Link to="/read">Reading</Link>
+          </p>
+          {ready && vault?.saveError ? <p className="mt-6 text-sm text-rose">{vault.saveError}</p> : null}
+          {ready && next ? (
+            <Link to="/study/$lessonId" params={{ lessonId: next.id }} className="continue-line">
+              {next.title}
             </Link>
-          ) : (
-            <p className="text-muted">The lesson path is finished. The library is still there.</p>
-          )}
-          {latest ? (
-            <Link to="/history/$readingId" params={{ readingId: latest.id }} className="text-moon">
+          ) : null}
+          {ready && latest ? (
+            <Link to="/history/$readingId" params={{ readingId: latest.id }} className="continue-line">
               Latest reading
             </Link>
           ) : null}
         </div>
-      ) : null}
+      </div>
     </Shell>
   );
 }

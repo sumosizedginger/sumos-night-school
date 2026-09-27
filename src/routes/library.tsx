@@ -3,11 +3,35 @@ import { useMemo, useState } from "react";
 import { CardFace } from "@/components/card-face";
 import { Shell } from "@/components/shell";
 import { CARDS } from "@/content/cards";
-import type { Suit } from "@/content/types";
+import type { Card, Suit } from "@/content/types";
 
 export const Route = createFileRoute("/library")({ component: Library });
 
 const FILTERS = ["all", "majors", "wands", "cups", "swords", "pentacles", "courts"] as const;
+const SUITS: { id: Suit; title: string }[] = [
+  { id: "wands", title: "Wands" },
+  { id: "cups", title: "Cups" },
+  { id: "swords", title: "Swords" },
+  { id: "pentacles", title: "Pentacles" },
+];
+
+function shelvesFor(cards: Card[], filter: (typeof FILTERS)[number]) {
+  if (filter === "courts") return [{ id: "courts", title: "Courts", cards }];
+  if (filter === "majors") return [{ id: "majors", title: "Majors", cards }];
+  if (filter !== "all") {
+    const suit = SUITS.find((item) => item.id === filter);
+    return [{ id: filter, title: suit?.title ?? filter, cards }];
+  }
+  const groups = [
+    { id: "majors", title: "Majors", cards: cards.filter((card) => card.arcana === "major") },
+    ...SUITS.map((suit) => ({
+      id: suit.id,
+      title: suit.title,
+      cards: cards.filter((card) => card.suit === suit.id),
+    })),
+  ];
+  return groups.filter((group) => group.cards.length > 0);
+}
 
 function Library() {
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>("all");
@@ -22,20 +46,17 @@ function Library() {
       return true;
     });
   }, [filter, query]);
+  const shelves = shelvesFor(cards, filter);
 
   return (
     <Shell>
       <h1 className="font-serif text-4xl">Library</h1>
-      <p className="mt-3 max-w-xl text-muted">The cabinet. Every card in the deck, filed by suit.</p>
-      <label className="mt-6 block text-sm text-muted">
-        Search by name
-        <input
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          className="mt-2 block w-full max-w-md border border-line bg-panel px-3 py-3 text-paper"
-        />
+      <p className="mt-3 max-w-xl text-muted">Filed by suit. Courts stay in their suit.</p>
+      <label className="slip">
+        <span>Find a name</span>
+        <input value={query} onChange={(event) => setQuery(event.target.value)} />
       </label>
-      <div className="mt-4 flex flex-wrap gap-2" role="tablist" aria-label="Filter the cabinet">
+      <div className="drawer-tabs" role="tablist" aria-label="Filter the cabinet">
         {FILTERS.map((item) => (
           <button
             key={item}
@@ -43,22 +64,27 @@ function Library() {
             role="tab"
             aria-selected={filter === item}
             onClick={() => setFilter(item)}
-            className={`min-h-11 border-b px-3 text-sm capitalize ${filter === item ? "border-gold-2 text-gold-2" : "border-transparent text-muted"}`}
+            className={filter === item ? "is-on" : ""}
           >
             {item}
           </button>
         ))}
       </div>
-      <p className="mt-4 text-sm text-muted">{cards.length} cards</p>
-      <ul className="mt-8 grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-4">
-        {cards.map((card) => (
-          <li key={card.id}>
-            <Link to="/card/$cardId" params={{ cardId: card.id }} className="lift-quiet block">
-              <CardFace card={card} compact />
-            </Link>
-          </li>
-        ))}
-      </ul>
+      {shelves.map((shelf) => (
+        <section key={shelf.id} className="shelf" aria-label={shelf.title}>
+          <h2 className="shelf-spine">{shelf.title}</h2>
+          <ul className="shelf-row">
+            {shelf.cards.map((card) => (
+              <li key={card.id}>
+                <Link to="/card/$cardId" params={{ cardId: card.id }} className="shelf-card">
+                  <CardFace card={card} compact caption={false} />
+                  <span className="shelf-name">{card.name}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))}
     </Shell>
   );
 }
