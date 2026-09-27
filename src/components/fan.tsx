@@ -4,7 +4,7 @@ import { CardBackArt, roman } from "@/components/card-face";
 function useNarrow() {
   const [narrow, setNarrow] = useState(false);
   useEffect(() => {
-    const media = window.matchMedia("(max-width: 640px)");
+    const media = window.matchMedia("(max-width: 900px)");
     const apply = () => setNarrow(media.matches);
     apply();
     media.addEventListener("change", apply);
@@ -31,7 +31,7 @@ export function CardFan({
   const hotOrder = hotId ? picked.indexOf(hotId) : -1;
   const status =
     hot === null
-      ? "Hover or focus a card. Chosen cards keep a brass numeral. Faces stay hidden."
+      ? "Choose a card. A brass numeral marks each one you take. Faces stay hidden."
       : hotOrder >= 0
         ? `${roman(hotOrder)}. ${seatTitles[hotOrder] ?? "Chosen"}`
         : `Card ${hot + 1}, face down`;
@@ -41,13 +41,11 @@ export function CardFan({
       <p className="mt-4 min-h-6 text-center text-sm text-gold-2" aria-live="polite">
         {status}
       </p>
-      <div className="fan-stage" onMouseLeave={() => setHot(null)}>
+      <div className={narrow ? "fan-grid" : "fan-row"} onMouseLeave={() => setHot(null)}>
         {ids.map((id, index) => {
           const order = picked.indexOf(id);
           const offset = index - mid;
-          const x = offset * (narrow ? 22 : 34);
-          const y = Math.abs(offset) * (narrow ? 5 : 8);
-          const rotate = offset * (narrow ? 4.2 : 6.2);
+          const rotate = narrow ? 0 : offset * 3.1;
           const label =
             order >= 0
               ? `${roman(order)}. ${seatTitles[order] ?? "Chosen"}, still face down`
@@ -57,10 +55,14 @@ export function CardFan({
               key={id}
               type="button"
               className="fan-card"
-              style={{
-                transform: `translateX(${x}px) translateY(${y}px) rotate(${rotate}deg)`,
-                zIndex: hot === index ? 40 : 8 + index,
-              }}
+              style={
+                narrow
+                  ? undefined
+                  : {
+                      transform: `rotate(${rotate}deg)`,
+                      zIndex: hot === index ? 40 : 8 + index,
+                    }
+              }
               aria-pressed={order >= 0}
               aria-label={label}
               onMouseEnter={() => setHot(index)}

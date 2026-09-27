@@ -153,31 +153,47 @@
     var(--shadow-card);
 }
 
-.fan-stage {
-  position: relative;
-  height: 20rem;
-  margin-top: 0.25rem;
-  overflow: hidden;
+.fan-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: 18rem;
+  margin-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  overflow-x: auto;
+}
+.fan-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem 0.6rem;
+  margin-top: 1rem;
 }
 .fan-card {
-  position: absolute;
-  bottom: 2rem;
-  left: 50%;
-  width: 7.25rem;
-  margin-left: -3.625rem;
+  position: relative;
+  width: 6.75rem;
+  flex: 0 0 6.75rem;
   transform-origin: 50% 120%;
   background: none;
   border: 0;
   padding: 0;
   color: inherit;
 }
+.fan-row .fan-card + .fan-card {
+  margin-left: -2.15rem;
+}
+.fan-grid .fan-card {
+  width: 100%;
+  flex: none;
+  margin: 0;
+  transform: none;
+}
 .fan-lift {
   display: block;
   transition: transform 280ms var(--ease-card);
 }
-.fan-card:hover .fan-lift,
-.fan-card:focus-visible .fan-lift {
-  transform: translateY(-24px) scale(1.05);
+.fan-row .fan-card:hover .fan-lift,
+.fan-row .fan-card:focus-visible .fan-lift {
+  transform: translateY(-18px) scale(1.04);
 }
 .fan-plate {
   position: relative;
@@ -208,6 +224,7 @@
   font-size: 0.72rem;
   letter-spacing: 0.08em;
   text-align: center;
+  pointer-events: none;
 }
 
 .altar {
@@ -321,12 +338,6 @@
 }
 
 @media (max-width: 640px) {
-  .fan-stage { height: 14.5rem; }
-  .fan-card { width: 4.5rem; margin-left: -2.25rem; }
-  .fan-card:hover .fan-lift,
-  .fan-card:focus-visible .fan-lift {
-    transform: translateY(-10px) scale(1.03);
-  }
   .altar-three,
   .altar-between,
   .altar-decision {
