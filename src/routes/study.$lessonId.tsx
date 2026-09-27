@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { btn, btnQuiet, Shell } from "@/components/shell";
+import { CardCompare } from "@/components/compare";
 import { getCard, CORPUS_VERSION } from "@/content/cards";
 import { getLesson, LESSONS } from "@/content/lessons";
 import { getSpread } from "@/content/spreads";
@@ -90,6 +91,13 @@ function LessonPage() {
           </Link>
         ) : null}
       </div>
+      {lesson.id === "pictures" ? (
+        <CardCompare
+          left={getCard("major-00")}
+          right={getCard("major-08")}
+          note="The Fool stands at a cliff with a bundle and a dog. Strength keeps a hand on the lion. Only what is painted is named."
+        />
+      ) : null}
     </Shell>
   );
 }

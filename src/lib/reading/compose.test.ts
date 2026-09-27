@@ -55,6 +55,8 @@ test("lens and composer follow the house rules", () => {
   assert.match(base.teaching.join("\n"), /job of this seat/i);
   assert.match(base.teaching.join("\n"), /Main meaning/);
   assert.notEqual(base.teaching.join("\n"), text);
+  assert.equal(base.blocks.map((block) => block.text).join("\n"), text);
+  assert.ok(base.blocks.some((block) => block.kind === "seat" && block.cardIds.includes("swords-05")));
   assert.equal(base.trace.lens, "work");
   assert.equal(base.trace.themPerceptionNote, false);
   assert.equal(base.paragraphs.join("\n"), compose({ question: "How do I handle the tension with my collaborator?", spread, seats, corpusVersion: CORPUS_VERSION }).paragraphs.join("\n"));

@@ -20,11 +20,11 @@ function Home() {
         Learn the deck as a language, then use it. One set of cards. A clear teacher. No fortune.
       </p>
       <div className="mt-8 grid gap-4 sm:grid-cols-2">
-        <Link to="/study" className="rounded-card border border-line bg-panel p-6">
+        <Link to="/study" className="panel-gilt rounded-card p-6">
           <p className="font-serif text-2xl text-gold-2">Study</p>
           <p className="mt-2 text-muted">Nine lessons, then the whole library.</p>
         </Link>
-        <Link to="/read" className="rounded-card border border-line bg-panel p-6">
+        <Link to="/read" className="panel-gilt rounded-card p-6">
           <p className="font-serif text-2xl text-gold-2">Reading</p>
           <p className="mt-2 text-muted">Ask something. Draw. See how the reading was built.</p>
         </Link>

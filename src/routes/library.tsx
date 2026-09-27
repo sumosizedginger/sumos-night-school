@@ -26,31 +26,34 @@ function Library() {
   return (
     <Shell>
       <h1 className="font-serif text-4xl">Library</h1>
+      <p className="mt-3 max-w-xl text-muted">The cabinet. Every card in the deck, filed by suit.</p>
       <label className="mt-6 block text-sm text-muted">
         Search by name
         <input
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          className="mt-2 w-full max-w-md border border-line bg-panel px-3 py-3 text-paper"
+          className="mt-2 block w-full max-w-md border border-line bg-panel px-3 py-3 text-paper"
         />
       </label>
-      <div className="mt-4 flex flex-wrap gap-2">
+      <div className="mt-4 flex flex-wrap gap-2" role="tablist" aria-label="Filter the cabinet">
         {FILTERS.map((item) => (
           <button
             key={item}
             type="button"
+            role="tab"
+            aria-selected={filter === item}
             onClick={() => setFilter(item)}
-            className={`min-h-11 px-3 text-sm capitalize ${filter === item ? "text-gold-2" : "text-muted"}`}
+            className={`min-h-11 border-b px-3 text-sm capitalize ${filter === item ? "border-gold-2 text-gold-2" : "border-transparent text-muted"}`}
           >
             {item}
           </button>
         ))}
       </div>
       <p className="mt-4 text-sm text-muted">{cards.length} cards</p>
-      <ul className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+      <ul className="mt-8 grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-4">
         {cards.map((card) => (
           <li key={card.id}>
-            <Link to="/card/$cardId" params={{ cardId: card.id }} className="block">
+            <Link to="/card/$cardId" params={{ cardId: card.id }} className="lift-quiet block">
               <CardFace card={card} compact />
             </Link>
           </li>

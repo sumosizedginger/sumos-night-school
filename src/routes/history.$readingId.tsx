@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { CardFace } from "@/components/card-face";
+import { Altar } from "@/components/altar";
 import { btn, btnQuiet, Shell } from "@/components/shell";
 import { VoiceCopy, VoiceSwitch, type ReadingView } from "@/components/voice";
 import { CARD_BY_ID } from "@/content/cards";
@@ -16,6 +16,8 @@ function HistoryDetail() {
   const reading = vault?.history.find((item) => item.id === readingId);
   const [deepError, setDeepError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [hoverIds, setHoverIds] = useState<string[]>([]);
+  const [pickedCard, setPickedCard] = useState<string | null>(null);
 
   if (!vault) {
     return (
@@ -92,19 +94,27 @@ function HistoryDetail() {
     <Shell>
       <p className="text-sm text-gold">{reading.spreadId}</p>
       <h1 className="mt-2 font-serif text-4xl">{reading.question || "Unfocused reading"}</h1>
-      <div className="mt-8 grid gap-6 sm:grid-cols-3">
-        {reading.seats.map((seat) => {
-          const card = CARD_BY_ID[seat.cardId];
-          return (
-            <div key={`${seat.positionId}-${seat.cardId}`}>
-              <p className="mb-3 text-center text-sm text-gold">{seat.positionTitle}</p>
-              {card ? <CardFace card={card} orientation={seat.orientation} /> : <p>{seat.cardName}</p>}
-            </div>
-          );
-        })}
-      </div>
+      <Altar
+        spreadId={reading.spreadId}
+        highlightIds={hoverIds.length ? hoverIds : pickedCard ? [pickedCard] : []}
+        selectedId={pickedCard}
+        onSelect={(id) => setPickedCard((current) => (current === id ? null : id))}
+        seats={reading.seats.map((seat) => ({
+          positionId: seat.positionId,
+          title: seat.positionTitle,
+          card: CARD_BY_ID[seat.cardId],
+          orientation: seat.orientation,
+        }))}
+      />
       <VoiceSwitch view={view} onChange={setVoice} />
-      <VoiceCopy view={view} paragraphs={reading.paragraphs} teaching={reading.teaching} />
+      <VoiceCopy
+        view={view}
+        paragraphs={reading.paragraphs}
+        teaching={reading.teaching}
+        blocks={reading.blocks}
+        activeCardId={pickedCard}
+        onHoverCardIds={setHoverIds}
+      />
       <p className="mt-6 max-w-2xl text-sm text-muted">A mirror for reflection, not a prediction or professional advice.</p>
       {view === "reading" ? (
         <>

@@ -34,15 +34,25 @@ export type ReadingTrace = {
   themPerceptionNote: boolean;
 };
 
+export type ReadingBlock = {
+  id: string;
+  text: string;
+  kind: "opening" | "seat" | "relationship" | "closing";
+  cardIds: string[];
+  positionIds: string[];
+  ruleIds: string[];
+};
+
 export type ComposeResult = {
   paragraphs: string[];
   teaching: string[];
+  blocks: ReadingBlock[];
   trace: ReadingTrace;
   lens: Lens;
   displayTitles: string[];
 };
 
-type Rule = { id: string; reading: string; teaching: string };
+type Rule = { id: string; reading: string; teaching: string; cardIds: string[] };
 
 function degloss(note: string): string {
   const text = note.replace(/^Reversed,\s*/i, "").trim();
@@ -189,12 +199,14 @@ export function compose(input: {
         reading: `${listNames(majors)} are large turns sitting together, not a passing mood.`,
         teaching:
           "Every card is a major. In the method, that is a chapter in a life, not a mood. The reading says they are large turns together. It does not stop to define a major.",
+        cardIds: majors.map((card) => card.id),
       });
     } else if (majors.length > 0 && minors.length > 0) {
       rules.push({
         id: "major-among-minors",
         reading: `${listNames(majors)} carries more of this than the smaller cards around it.`,
         teaching: `A major beside smaller cards is the louder voice. Here that is ${listNames(majors)}. The reading says it carries more of this. It does not give the rule a lecture.`,
+        cardIds: majors.map((card) => card.id),
       });
     }
 
@@ -211,12 +223,15 @@ export function compose(input: {
           id: "suit-reinforcement",
           reading: `${lead} keep coming back to ${SUIT_CONCERN[suit]}.`,
           teaching: `${lead} are ${suitLabel(suit)}. On a three-card spread, a repeated suit means that concern is carrying the reading: ${SUIT_CONCERN[suit]}. This is the Golden Dawn map this deck teaches, not a law of nature. The reading names the concern. It does not teach the map.`,
+          cardIds: cards.filter((card) => card.suit === suit).map((card) => card.id),
         });
       }
     }
 
     const clashes: string[] = [];
     const supports: string[] = [];
+    const clashCards: Card[] = [];
+    const supportCards: Card[] = [];
     const clashTeach: string[] = [];
     const supportTeach: string[] = [];
     for (let left = 0; left < cards.length; left += 1) {
@@ -228,18 +243,22 @@ export function compose(input: {
         if (key === "cups+wands") {
           clashes.push(`${a.name} and ${b.name} are pulling this two ways at once.`);
           clashTeach.push(`${a.name} (Cups, water, feeling) and ${b.name} (Wands, fire, will) are the clash this deck teaches.`);
+          clashCards.push(a, b);
         }
         if (key === "pentacles+swords") {
           clashes.push(`${a.name} and ${b.name} are pulling this two ways at once.`);
           clashTeach.push(`${a.name} and ${b.name} clash as earth and air: material fact against thought.`);
+          clashCards.push(a, b);
         }
         if (key === "swords+wands") {
           supports.push(`${a.name} and ${b.name} are leaning the same way.`);
           supportTeach.push(`${a.name} and ${b.name} support each other as air and fire: thought and will.`);
+          supportCards.push(a, b);
         }
         if (key === "cups+pentacles") {
           supports.push(`${a.name} and ${b.name} are leaning the same way.`);
           supportTeach.push(`${a.name} and ${b.name} support each other as water and earth: feeling and material life.`);
+          supportCards.push(a, b);
         }
       }
     }
@@ -248,6 +267,7 @@ export function compose(input: {
         id: "element-clash",
         reading: clashes.join(" "),
         teaching: `Element clash. ${clashTeach.join(" ")} The reading says they pull two ways. It does not name the elements.`,
+        cardIds: [...new Set(clashCards.map((card) => card.id))],
       });
     }
     if (supports.length) {
@@ -255,6 +275,7 @@ export function compose(input: {
         id: "element-support",
         reading: supports.join(" "),
         teaching: `Element support. ${supportTeach.join(" ")} The reading says they lean the same way. It does not name the elements.`,
+        cardIds: [...new Set(supportCards.map((card) => card.id))],
       });
     }
 
@@ -265,6 +286,7 @@ export function compose(input: {
     }
     const rankReading: string[] = [];
     const rankTeaching: string[] = [];
+    const rankCards: Card[] = [];
     for (const [key, group] of byRank) {
       if (group.length < 2) continue;
       const numeric = Number(key);
@@ -273,9 +295,11 @@ export function compose(input: {
         rankTeaching.push(
           `${listNames(group)} share the ${RANK_WORD[numeric] ?? key}. On the number plot that beat is ${NUMBER_PLOT[numeric]}. The suit says what the beat is about.`,
         );
+        rankCards.push(...group);
       } else if (key === "page" || key === "knight" || key === "queen" || key === "king") {
         rankReading.push(`The same way of meeting this shows up twice, in ${listNames(group)}.`);
         rankTeaching.push(`${listNames(group)} are both ${key}s. That mode is ${COURT_MODE[key]}. A doubled court is a doubled mode, not two people of a gender.`);
+        rankCards.push(...group);
       }
     }
     if (rankReading.length) {
@@ -283,6 +307,7 @@ export function compose(input: {
         id: "repeated-rank",
         reading: rankReading.join(" "),
         teaching: rankTeaching.join(" "),
+        cardIds: rankCards.map((card) => card.id),
       });
     }
 
@@ -293,16 +318,18 @@ export function compose(input: {
         id: "court-meets-pip",
         reading: `${listNames(courts)} is how a person is meeting what ${listNames(pips)} describes. Not a named stranger.`,
         teaching: `${listNames(courts)} is a court, a mode of a person: learning, pursuing, inhabiting, or directing. ${listNames(pips)} is a numbered card, a situation. A court meeting a pip is a mode meeting a situation. It is not “a woman is coming” and it is not a named individual. The reading says how a person is meeting the situation.`,
+        cardIds: [...courts, ...pips].map((card) => card.id),
       });
     }
 
-    const reversed = input.seats.filter((seat) => seat.orientation === "reversed").length;
-    if (reversed >= 2) {
+    const reversedSeats = input.seats.filter((seat) => seat.orientation === "reversed");
+    if (reversedSeats.length >= 2) {
       rules.push({
         id: "reversal-cluster",
         reading: "More than one part of this is stalled or kept private. That is not a pile of bad omens.",
         teaching:
           "More than one card is reversed. Each reversal is one tilt: blocked, inward, delayed, or excess. Together they are stalled or private energy, not a curse and not Waite's harsher reversed meanings. The reading says stalled or private. It does not teach the four tilts.",
+        cardIds: reversedSeats.map((seat) => seat.card.id),
       });
     }
   } else {
@@ -312,6 +339,48 @@ export function compose(input: {
   const inReading = rules.slice(0, 2);
   if (inReading.length) paragraphs.push(inReading.map((rule) => rule.reading).join(" "));
   paragraphs.push(closing(input.spread.id));
+
+  const blocks: ReadingBlock[] = [
+    {
+      id: "opening",
+      text: paragraphs[0] ?? "",
+      kind: "opening",
+      cardIds: [],
+      positionIds: [],
+      ruleIds: [],
+    },
+  ];
+  input.seats.forEach((seat, index) => {
+    const position = input.spread.positions[index];
+    blocks.push({
+      id: `seat-${index}`,
+      text: paragraphs[index + 1] ?? "",
+      kind: "seat",
+      cardIds: [seat.card.id],
+      positionIds: [position?.id ?? `seat-${index}`],
+      ruleIds: [],
+    });
+  });
+  let cursor = input.seats.length + 1;
+  if (inReading.length) {
+    blocks.push({
+      id: "relationship",
+      text: paragraphs[cursor] ?? "",
+      kind: "relationship",
+      cardIds: [...new Set(inReading.flatMap((rule) => rule.cardIds))],
+      positionIds: [],
+      ruleIds: inReading.map((rule) => rule.id),
+    });
+    cursor += 1;
+  }
+  blocks.push({
+    id: "closing",
+    text: paragraphs[cursor] ?? "",
+    kind: "closing",
+    cardIds: input.seats.map((seat) => seat.card.id),
+    positionIds: input.spread.positions.map((position) => position.id),
+    ruleIds: [],
+  });
 
   if (rules.length) {
     teaching.push(rules.map((rule) => rule.teaching).join(" "));
@@ -338,6 +407,7 @@ export function compose(input: {
   return {
     paragraphs,
     teaching,
+    blocks,
     lens: classified.lens,
     displayTitles: titles,
     trace: {

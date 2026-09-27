@@ -1,5 +1,5 @@
 import type { Orientation } from "@/content/types";
-import type { ReadingTrace } from "@/lib/reading/compose";
+import type { ReadingBlock, ReadingTrace } from "@/lib/reading/compose";
 import type { SpreadId } from "@/content/spreads";
 
 export type SeatSnapshot = {
@@ -20,6 +20,7 @@ export type StoredReading = {
   spreadId: SpreadId;
   seats: SeatSnapshot[];
   paragraphs: string[];
+  blocks?: ReadingBlock[];
   teaching?: string[];
   view?: "reading" | "teaching";
   trace: ReadingTrace;
@@ -28,7 +29,7 @@ export type StoredReading = {
 };
 
 export type Vault = {
-  settings: { reversals: boolean };
+  settings: { reversals: boolean; sound: boolean };
   progress: { lessonsCompleted: string[]; cardsOpened: string[] };
   history: StoredReading[];
   saveError: string | null;
@@ -38,7 +39,7 @@ const KEY = "nightSchool.v1";
 
 export function emptyVault(): Vault {
   return {
-    settings: { reversals: true },
+    settings: { reversals: true, sound: false },
     progress: { lessonsCompleted: [], cardsOpened: [] },
     history: [],
     saveError: null,
@@ -57,7 +58,10 @@ export function loadVault(): Vault {
     const parsed = JSON.parse(raw) as Partial<Vault>;
     const history = Array.isArray(parsed.history) ? (parsed.history as StoredReading[]).slice(0, 40) : [];
     return {
-      settings: { reversals: parsed.settings?.reversals !== false },
+      settings: {
+        reversals: parsed.settings?.reversals !== false,
+        sound: parsed.settings?.sound === true,
+      },
       progress: {
         lessonsCompleted: asStringArray(parsed.progress?.lessonsCompleted),
         cardsOpened: asStringArray(parsed.progress?.cardsOpened),

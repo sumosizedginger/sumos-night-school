@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { CardBack, CardFace } from "@/components/card-face";
+import { Altar } from "@/components/altar";
+import { CardFan } from "@/components/fan";
 import { btn, btnQuiet, Shell } from "@/components/shell";
 import { VoiceCopy, VoiceSwitch, type ReadingView } from "@/components/voice";
 import { CARDS, CARD_BY_ID, CORPUS_VERSION, getCard } from "@/content/cards";
@@ -11,6 +12,7 @@ import { compose } from "@/lib/reading/compose";
 import { dealIds, fanIds, orientationsFor } from "@/lib/reading/draw";
 import type { SeatSnapshot, StoredReading } from "@/lib/storage";
 import { useVault } from "@/lib/use-vault";
+import { cue } from "@/lib/sound";
 
 export const Route = createFileRoute("/read")({ component: Read });
 
@@ -44,6 +46,8 @@ function Read() {
   const [reading, setReading] = useState<StoredReading | null>(null);
   const [deepError, setDeepError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [hoverIds, setHoverIds] = useState<string[]>([]);
+  const [pickedCard, setPickedCard] = useState<string | null>(null);
   const saved = useRef<string | null>(null);
   const hydrated = useRef(false);
 
@@ -74,6 +78,8 @@ function Read() {
     setReading(null);
     setDeepError(null);
     setPending(false);
+    setHoverIds([]);
+    setPickedCard(null);
   }
 
   function begin() {
@@ -90,6 +96,7 @@ function Read() {
   }
 
   function commitDraw(ids: string[]) {
+    cue(vault?.settings.sound, "deal");
     const orientations = orientationsFor(ids.length, reversals, Math.random);
     const next = ids.map((id, index) => ({ card: getCard(id), orientation: orientations[index] ?? "upright" }));
     setDrawn(next);
@@ -124,6 +131,7 @@ function Read() {
       spreadId,
       seats,
       paragraphs: result.paragraphs,
+      blocks: result.blocks,
       teaching: result.teaching,
       view: "reading",
       trace: result.trace,
@@ -248,7 +256,7 @@ function Read() {
             onClick={() => {
               const next = !reversals;
               setReversals(next);
-              commit((current) => ({ ...current, settings: { reversals: next } }));
+              commit((current) => ({ ...current, settings: { ...current.settings, reversals: next } }));
             }}
           >
             Reversals {reversals ? "on" : "off"}
@@ -260,9 +268,18 @@ function Read() {
       ) : null}
 
       {phase === "confirm-deal" ? (
-        <div className="mt-8 max-w-xl">
-          <p>The deck is shuffled. Confirm to fix the cards and, if reversals are on, their orientations. Leaving now discards this draw.</p>
-          <div className="mt-6 flex flex-wrap gap-3">
+        <div className="mt-8">
+          <p className="max-w-xl">The deck is shuffled. These seats stay empty until you confirm. Leaving now discards this draw.</p>
+          <div className="mt-8">
+            <Altar
+              spreadId={spreadId}
+              seats={spread.positions.map((position) => ({
+                positionId: position.id,
+                title: position.title,
+              }))}
+            />
+          </div>
+          <div className="mt-8 flex flex-wrap gap-3">
             <button type="button" className={btn} onClick={() => commitDraw(pendingIds)}>Reveal {spread.positions.length}</button>
             <button type="button" className={btnQuiet} onClick={begin}>Shuffle again</button>
             <button type="button" className={btnQuiet} onClick={reset}>Leave without drawing</button>
@@ -273,27 +290,16 @@ function Read() {
       {phase === "fan" ? (
         <div className="mt-8">
           <p className="max-w-xl">Choose {spread.positions.length} cards, in seat order. The rest stay out.</p>
-          <ul className="mt-6 grid grid-cols-3 gap-3 sm:grid-cols-4">
-            {fan.map((id, index) => {
+          <CardFan
+            ids={fan}
+            picked={picked}
+            seatTitles={spread.positions.map((position) => position.title)}
+            onToggle={(id) => {
               const order = picked.indexOf(id);
-              return (
-                <li key={id}>
-                  <button
-                    type="button"
-                    className="w-full text-left"
-                    aria-pressed={order >= 0}
-                    onClick={() => {
-                      if (order >= 0) setPicked(picked.filter((item) => item !== id));
-                      else if (picked.length < spread.positions.length) setPicked([...picked, id]);
-                    }}
-                  >
-                    <CardBack label={order >= 0 ? `${order + 1}. ${spread.positions[order]?.title ?? ""}` : `Card ${index + 1}`} />
-                    <span className="sr-only">Face-down card {index + 1}</span>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
+              if (order >= 0) setPicked(picked.filter((item) => item !== id));
+              else if (picked.length < spread.positions.length) setPicked([...picked, id]);
+            }}
+          />
           <div className="mt-6 flex flex-wrap gap-3">
             <button type="button" className={btn} disabled={picked.length !== spread.positions.length} onClick={() => commitDraw(picked)}>
               Confirm {picked.length} of {spread.positions.length}
@@ -306,17 +312,29 @@ function Read() {
 
       {phase === "reveal" ? (
         <div className="mt-8">
-          <div className="grid gap-6 sm:grid-cols-3">
-            {drawn.slice(0, shown + 1).map((item, index) => (
-              <div key={item.card.id}>
-                <p className="mb-3 text-center text-sm text-gold">{spread.positions[index]?.title}</p>
-                <CardFace card={item.card} orientation={item.orientation} reveal />
-              </div>
-            ))}
-          </div>
+          <Altar
+            spreadId={spreadId}
+            seats={spread.positions.map((position, index) => ({
+              positionId: position.id,
+              title: position.title,
+              card: index <= shown ? drawn[index]?.card : undefined,
+              orientation: drawn[index]?.orientation,
+              reveal: index === shown,
+            }))}
+          />
           <div className="mt-6 flex flex-wrap gap-3">
             {shown + 1 < drawn.length ? (
-              <button type="button" className={btn} onClick={() => setShown((count) => count + 1)}>Next card</button>
+              <button
+                type="button"
+                className={btn}
+                onClick={() => {
+                  const next = drawn[shown + 1];
+                  cue(vault?.settings.sound, next?.card.arcana === "major" ? "major" : "seat");
+                  setShown((count) => count + 1);
+                }}
+              >
+                Next card
+              </button>
             ) : (
               <button type="button" className={btn} onClick={() => finish()}>Show the reading</button>
             )}
@@ -327,19 +345,27 @@ function Read() {
 
       {phase === "result" && reading ? (
         <div className="mt-8">
-          <div className="grid gap-6 sm:grid-cols-3">
-            {reading.seats.map((seat) => {
-              const card = CARD_BY_ID[seat.cardId];
-              return card ? (
-                <div key={seat.positionId}>
-                  <p className="mb-3 text-center text-sm text-gold">{seat.positionTitle}</p>
-                  <CardFace card={card} orientation={seat.orientation} />
-                </div>
-              ) : null;
-            })}
-          </div>
+          <Altar
+            spreadId={reading.spreadId}
+            highlightIds={hoverIds.length ? hoverIds : pickedCard ? [pickedCard] : []}
+            selectedId={pickedCard}
+            onSelect={(id) => setPickedCard((current) => (current === id ? null : id))}
+            seats={reading.seats.map((seat) => ({
+              positionId: seat.positionId,
+              title: seat.positionTitle,
+              card: CARD_BY_ID[seat.cardId],
+              orientation: seat.orientation,
+            }))}
+          />
           <VoiceSwitch view={reading.view ?? "reading"} onChange={setVoice} />
-          <VoiceCopy view={reading.view ?? "reading"} paragraphs={reading.paragraphs} teaching={reading.teaching} />
+          <VoiceCopy
+            view={reading.view ?? "reading"}
+            paragraphs={reading.paragraphs}
+            teaching={reading.teaching}
+            blocks={reading.blocks}
+            activeCardId={pickedCard}
+            onHoverCardIds={setHoverIds}
+          />
           <p className="mt-6 max-w-2xl text-sm text-muted">A mirror for reflection, not a prediction or professional advice.</p>
           {(reading.view ?? "reading") === "reading" ? (
             <>

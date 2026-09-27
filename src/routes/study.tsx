@@ -1,5 +1,6 @@
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { Shell } from "@/components/shell";
+import { Constellation } from "@/components/constellation";
 import { LESSONS } from "@/content/lessons";
 import { useVault } from "@/lib/use-vault";
 
@@ -23,6 +24,10 @@ function StudyList() {
       <p className="mt-3 max-w-xl text-muted">
         Nine lessons, in order. This is the class. A reading will not reteach it. On a finished draw, Teach this draw is the class for those cards only.
       </p>
+      <Constellation
+        cardsOpened={vault?.progress.cardsOpened ?? []}
+        lessonsCompleted={vault?.progress.lessonsCompleted ?? []}
+      />
       <ol className="mt-8 divide-y divide-line border-y border-line">
         {LESSONS.map((lesson, index) => (
           <li key={lesson.id}>

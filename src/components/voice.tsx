@@ -1,3 +1,4 @@
+import type { ReadingBlock } from "@/lib/reading/compose";
 import { btn, btnQuiet } from "@/components/shell";
 
 export type ReadingView = "reading" | "teaching";
@@ -31,10 +32,16 @@ export function VoiceCopy({
   view,
   paragraphs,
   teaching,
+  blocks,
+  activeCardId,
+  onHoverCardIds,
 }: {
   view: ReadingView;
   paragraphs: string[];
   teaching?: string[];
+  blocks?: ReadingBlock[];
+  activeCardId?: string | null;
+  onHoverCardIds?: (ids: string[]) => void;
 }) {
   if (view === "teaching") {
     if (!teaching?.length) {
@@ -46,7 +53,7 @@ export function VoiceCopy({
     }
     return (
       <div className="mt-6 max-w-2xl space-y-4">
-        <p className="text-sm text-gold">The class, for these cards only. The reading does not say this.</p>
+        <p className="text-sm text-muted">The class, for these cards only. The reading does not say this.</p>
         {teaching.map((paragraph) => (
           <p key={paragraph}>{paragraph}</p>
         ))}
@@ -54,14 +61,31 @@ export function VoiceCopy({
     );
   }
 
+  const lines = blocks?.length ? blocks : paragraphs.map((text, index) => ({ id: `p-${index}`, text, cardIds: [] as string[] }));
+
   return (
-    <div className="mt-6 max-w-2xl space-y-4">
+    <div className="mt-6 max-w-2xl space-y-4" onMouseLeave={() => onHoverCardIds?.([])}>
       {!teaching?.length ? (
         <p className="text-sm text-muted">Saved before the two voices were split. The text below is the original.</p>
       ) : null}
-      {paragraphs.map((paragraph) => (
-        <p key={paragraph}>{paragraph}</p>
-      ))}
+      {lines.map((line) => {
+        const lit = Boolean(activeCardId && line.cardIds.includes(activeCardId));
+        return (
+          <p
+            key={line.id}
+            className={`reading-block ${lit ? "is-lit" : ""}`}
+            onMouseEnter={() => onHoverCardIds?.(line.cardIds)}
+            onFocus={() => onHoverCardIds?.(line.cardIds)}
+            onBlur={(event) => {
+              const next = event.relatedTarget;
+              if (!(next instanceof Node) || !event.currentTarget.parentElement?.contains(next)) onHoverCardIds?.([]);
+            }}
+            tabIndex={line.cardIds.length ? 0 : undefined}
+          >
+            {line.text}
+          </p>
+        );
+      })}
     </div>
   );
 }
